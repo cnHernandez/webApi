@@ -10,6 +10,7 @@ namespace ApiSwagger.Controllers.Cubiertas
     [Route("api/cubiertas")]
     public class CubiertasController : ControllerBase
     {
+
         private readonly AppDbContext _context;
         public CubiertasController(AppDbContext context)
         {
@@ -54,7 +55,7 @@ namespace ApiSwagger.Controllers.Cubiertas
                 UbicacionDescripcion = cubierta.Ubicacion?.Descripcion ?? string.Empty
             };
             return CreatedAtAction(nameof(GetCubierta), new { id = cubierta.IdCubierta }, dto);
-    // ...existing code...
+            // ...existing code...
         }
 
         // GET /cubiertas (stock actual)
@@ -78,9 +79,9 @@ namespace ApiSwagger.Controllers.Cubiertas
                         FechaRecapada = cubierta.FechaRecapada,
                         FechaDobleRecapada = cubierta.FechaDobleRecapada
                     },
-                        FechaRecapada = cubierta.FechaRecapada,
-                        FechaDobleRecapada = cubierta.FechaDobleRecapada,
-                        FechaReparacion = cubierta.FechaReparacion,
+                    FechaRecapada = cubierta.FechaRecapada,
+                    FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                    FechaReparacion = cubierta.FechaReparacion,
                     IdColectivo = cubierta.IdColectivo ?? 0,
                     IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
                     UbicacionDescripcion = cubierta.Ubicacion?.Descripcion ?? string.Empty
@@ -89,7 +90,7 @@ namespace ApiSwagger.Controllers.Cubiertas
             }
             return Ok(result);
         }
-     
+
         // GET /cubiertas/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCubierta(int id)
@@ -109,9 +110,9 @@ namespace ApiSwagger.Controllers.Cubiertas
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada
                 },
-                    FechaRecapada = cubierta.FechaRecapada,
-                    FechaDobleRecapada = cubierta.FechaDobleRecapada,
-                    FechaReparacion = cubierta.FechaReparacion,
+                FechaRecapada = cubierta.FechaRecapada,
+                FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                FechaReparacion = cubierta.FechaReparacion,
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
                 UbicacionDescripcion = cubierta.Ubicacion?.Descripcion ?? string.Empty
@@ -138,9 +139,9 @@ namespace ApiSwagger.Controllers.Cubiertas
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada
                 },
-                    FechaRecapada = cubierta.FechaRecapada,
-                    FechaDobleRecapada = cubierta.FechaDobleRecapada,
-                    FechaReparacion = cubierta.FechaReparacion,
+                FechaRecapada = cubierta.FechaRecapada,
+                FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                FechaReparacion = cubierta.FechaReparacion,
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
                 UbicacionDescripcion = cubierta.Ubicacion?.Descripcion ?? string.Empty
@@ -149,64 +150,77 @@ namespace ApiSwagger.Controllers.Cubiertas
         }
 
         // PUT /cubiertas/nroserie/{nroSerie}/estado (actualizar estado por nro de serie)
-      [HttpPut("nroserie/{nroSerie}/estado")]
-public async Task<IActionResult> ActualizarEstadoCubierta(string nroSerie, [FromBody] EstadoCubiertaDto body)
-{
-    var cubierta = await _context.Cubiertas.FirstOrDefaultAsync(c => c.NroSerie == nroSerie);
-    if (cubierta == null) return NotFound();
-
-    if (!Enum.TryParse<EstadoCubierta>(body.Estado, true, out var estadoEnum))
-        return BadRequest("Estado inválido");
-
-    cubierta.Estado = estadoEnum;
-
-    // Actualizar la fecha según el estado
-    if (estadoEnum == EstadoCubierta.Recapada && body.FechaRecapada.HasValue)
-        cubierta.FechaRecapada = body.FechaRecapada.Value;
-    if (estadoEnum == EstadoCubierta.DobleRecapada && body.FechaDobleRecapada.HasValue)
-        cubierta.FechaDobleRecapada = body.FechaDobleRecapada.Value;
-
-    // Si pasa a EnReparacion, desmontar la cubierta
-    if (estadoEnum == EstadoCubierta.EnReparacion)
-    {
-        // Buscar el montaje actual sin desinstalación
-        var montajeActual = await _context.MontajesCubierta
-            .Where(m => m.IdCubierta == cubierta.IdCubierta && m.FechaDesinstalacion == null)
-            .OrderByDescending(m => m.FechaMontaje)
-            .FirstOrDefaultAsync();
-
-        if (montajeActual != null)
+        [HttpPut("nroserie/{nroSerie}/estado")]
+        public async Task<IActionResult> ActualizarEstadoCubierta(string nroSerie, [FromBody] EstadoCubiertaDto body)
         {
-            montajeActual.FechaDesinstalacion = DateTime.Now;
-            // Guardar el motivo del input en el montaje anterior
-            montajeActual.MotivoCambio = body.MotivoCambio;
-            _context.MontajesCubierta.Update(montajeActual);
+            var cubierta = await _context.Cubiertas.FirstOrDefaultAsync(c => c.NroSerie == nroSerie);
+            if (cubierta == null) return NotFound();
 
-            // El nuevo montaje siempre con motivo 'a Reparar'
-            var nuevoMontaje = new MontajeCubierta
+            if (!Enum.TryParse<EstadoCubierta>(body.Estado, true, out var estadoEnum))
+                return BadRequest("Estado inválido");
+
+            cubierta.Estado = estadoEnum;
+
+            // Actualizar la fecha según el estado
+            if (estadoEnum == EstadoCubierta.Recapada && body.FechaRecapada.HasValue)
+                cubierta.FechaRecapada = body.FechaRecapada.Value;
+            if (estadoEnum == EstadoCubierta.DobleRecapada && body.FechaDobleRecapada.HasValue)
+                cubierta.FechaDobleRecapada = body.FechaDobleRecapada.Value;
+
+            // Si pasa a EnReparacion, desmontar la cubierta
+            if (estadoEnum == EstadoCubierta.EnReparacion)
             {
-                IdCubierta = cubierta.IdCubierta,
-                IdColectivo = null,
-                IdUbicacion = null,
-                MotivoCambio = "a Reparar",
-                FechaMontaje = DateTime.Now,
-                FechaDesinstalacion = DateTime.Now,
-                Cubierta = cubierta
-            };
-            _context.MontajesCubierta.Add(nuevoMontaje);
+                // Buscar el montaje actual sin desinstalación
+                var montajeActual = await _context.MontajesCubierta
+                    .Where(m => m.IdCubierta == cubierta.IdCubierta && m.FechaDesinstalacion == null)
+                    .OrderByDescending(m => m.FechaMontaje)
+                    .FirstOrDefaultAsync();
+
+                if (montajeActual != null)
+                {
+                    montajeActual.FechaDesinstalacion = DateTime.Now;
+                    // Guardar el motivo del input en el montaje anterior
+                    montajeActual.MotivoCambio = body.MotivoCambio;
+                    _context.MontajesCubierta.Update(montajeActual);
+
+                    // El nuevo montaje siempre con motivo 'a Reparar'
+                    var nuevoMontaje = new MontajeCubierta
+                    {
+                        IdCubierta = cubierta.IdCubierta,
+                        IdColectivo = null,
+                        IdUbicacion = null,
+                        MotivoCambio = "a Reparar",
+                        FechaMontaje = DateTime.Now,
+                        FechaDesinstalacion = DateTime.Now,
+                        Cubierta = cubierta
+                    };
+                    _context.MontajesCubierta.Add(nuevoMontaje);
+                }
+
+                // Desasignar cubierta
+                cubierta.IdColectivo = null;
+                cubierta.Ubicacion = null;
+                cubierta.FechaReparacion = DateTime.Now;
+                // Desasignar también la clave foránea UbicacionIdUbicacion si existe
+                if (_context.Entry(cubierta).Property("UbicacionIdUbicacion") != null)
+                    _context.Entry(cubierta).Property("UbicacionIdUbicacion").CurrentValue = null;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
-    // Desasignar cubierta
-        cubierta.IdColectivo = null;
-        cubierta.Ubicacion = null;
-        cubierta.FechaReparacion = DateTime.Now;
-        // Desasignar también la clave foránea UbicacionIdUbicacion si existe
-        if (_context.Entry(cubierta).Property("UbicacionIdUbicacion") != null)
-            _context.Entry(cubierta).Property("UbicacionIdUbicacion").CurrentValue = null;
+         // DELETE /cubiertas/{id} (baja física)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarCubierta(int id)
+        {
+            var cubierta = await _context.Cubiertas.FindAsync(id);
+            if (cubierta == null) return NotFound();
+            _context.Cubiertas.Remove(cubierta);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
-
-    await _context.SaveChangesAsync();
-    return Ok();
-}
-    }
+    
+    
 }
