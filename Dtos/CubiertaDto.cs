@@ -18,6 +18,9 @@ namespace ApiSwagger.Dtos
         public string Medida { get; set; } = string.Empty;
         public DateTime FechaCompra { get; set; }
         public EstadoCubiertaDto EstadoInfo { get; set; } = new EstadoCubiertaDto();
+    public DateTime? FechaRecapada { get; set; }
+    public DateTime? FechaDobleRecapada { get; set; }
+    public DateTime? FechaReparacion { get; set; }
         public int IdColectivo { get; set; }
         public int IdUbicacion { get; set; }
         public string UbicacionDescripcion { get; set; } = string.Empty;

@@ -78,6 +78,9 @@ namespace ApiSwagger.Controllers.Cubiertas
                         FechaRecapada = cubierta.FechaRecapada,
                         FechaDobleRecapada = cubierta.FechaDobleRecapada
                     },
+                        FechaRecapada = cubierta.FechaRecapada,
+                        FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                        FechaReparacion = cubierta.FechaReparacion,
                     IdColectivo = cubierta.IdColectivo ?? 0,
                     IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
                     UbicacionDescripcion = cubierta.Ubicacion?.Descripcion ?? string.Empty
@@ -106,6 +109,9 @@ namespace ApiSwagger.Controllers.Cubiertas
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada
                 },
+                    FechaRecapada = cubierta.FechaRecapada,
+                    FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                    FechaReparacion = cubierta.FechaReparacion,
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
                 UbicacionDescripcion = cubierta.Ubicacion?.Descripcion ?? string.Empty
@@ -132,6 +138,9 @@ namespace ApiSwagger.Controllers.Cubiertas
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada
                 },
+                    FechaRecapada = cubierta.FechaRecapada,
+                    FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                    FechaReparacion = cubierta.FechaReparacion,
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
                 UbicacionDescripcion = cubierta.Ubicacion?.Descripcion ?? string.Empty
