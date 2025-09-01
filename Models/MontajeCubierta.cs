@@ -8,9 +8,9 @@ namespace ApiSwagger.Models
     {
         [Key]
         public int IdMontaje { get; set; }
-        public int IdCubierta { get; set; }
-        public int IdColectivo { get; set; }
-        public int IdUbicacion { get; set; }
+    public int IdCubierta { get; set; }
+    public int? IdColectivo { get; set; }
+    public int? IdUbicacion { get; set; }
         public DateTime FechaMontaje { get; set; } = DateTime.Now;
         public string MotivoCambio { get; set; } = string.Empty;
         public DateTime? FechaDesinstalacion { get; set; }
@@ -18,8 +18,8 @@ namespace ApiSwagger.Models
         [ForeignKey("IdCubierta")]
     public required Cubierta Cubierta { get; set; }
     [ForeignKey("IdColectivo")]
-    public required Colectivo Colectivo { get; set; }
+    public Colectivo? Colectivo { get; set; }
     [ForeignKey("IdUbicacion")]
-    public required UbicacionCubierta UbicacionCubierta { get; set; }
+    public UbicacionCubierta? UbicacionCubierta { get; set; }
     }
 }

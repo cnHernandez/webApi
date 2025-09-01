@@ -6,7 +6,8 @@ namespace ApiSwagger.Models
     {
         Nueva,
         Recapada,
-        DobleRecapada
+        DobleRecapada,
+        EnReparacion
     }
 
     public class Cubierta
@@ -20,6 +21,7 @@ namespace ApiSwagger.Models
     public DateTime? FechaRecapada { get; set; }
     public DateTime? FechaDobleRecapada { get; set; }
     public EstadoCubierta Estado { get; set; } = EstadoCubierta.Nueva;
+    public DateTime? FechaReparacion { get; set; }
     // Relación con Colectivo
     public int? IdColectivo { get; set; }
     // Relación con UbicacionCubierta

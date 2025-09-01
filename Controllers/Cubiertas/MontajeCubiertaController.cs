@@ -105,8 +105,8 @@ namespace ApiSwagger.Controllers.Cubiertas
             {
                 IdMontaje = montaje.IdMontaje,
                 IdCubierta = montaje.IdCubierta,
-                IdColectivo = montaje.IdColectivo,
-                IdUbicacion = montaje.IdUbicacion,
+                IdColectivo = montaje.IdColectivo ?? 0,
+                IdUbicacion = montaje.IdUbicacion ?? 0,
                 FechaMontaje = montaje.FechaMontaje,
                 MotivoCambio = montaje.MotivoCambio,
                 FechaDesinstalacion = montaje.FechaDesinstalacion,

@@ -157,6 +157,45 @@ public async Task<IActionResult> ActualizarEstadoCubierta(string nroSerie, [From
     if (estadoEnum == EstadoCubierta.DobleRecapada && body.FechaDobleRecapada.HasValue)
         cubierta.FechaDobleRecapada = body.FechaDobleRecapada.Value;
 
+    // Si pasa a EnReparacion, desmontar la cubierta
+    if (estadoEnum == EstadoCubierta.EnReparacion)
+    {
+        // Buscar el montaje actual sin desinstalación
+        var montajeActual = await _context.MontajesCubierta
+            .Where(m => m.IdCubierta == cubierta.IdCubierta && m.FechaDesinstalacion == null)
+            .OrderByDescending(m => m.FechaMontaje)
+            .FirstOrDefaultAsync();
+
+        if (montajeActual != null)
+        {
+            montajeActual.FechaDesinstalacion = DateTime.Now;
+            montajeActual.MotivoCambio = "a Reparar";
+            _context.MontajesCubierta.Update(montajeActual);
+
+            // Insertar nuevo movimiento de desmontaje solo con los campos obligatorios
+            var nuevoMontaje = new MontajeCubierta
+            {
+                IdCubierta = cubierta.IdCubierta,
+                IdColectivo = null,
+                IdUbicacion = null,
+                MotivoCambio = "a Reparar",
+                FechaMontaje = DateTime.Now,
+                FechaDesinstalacion = DateTime.Now,
+                Cubierta = cubierta
+                // No asignar Colectivo ni UbicacionCubierta
+            };
+            _context.MontajesCubierta.Add(nuevoMontaje);
+        }
+
+    // Desasignar cubierta
+        cubierta.IdColectivo = null;
+        cubierta.Ubicacion = null;
+        cubierta.FechaReparacion = DateTime.Now;
+        // Desasignar también la clave foránea UbicacionIdUbicacion si existe
+        if (_context.Entry(cubierta).Property("UbicacionIdUbicacion") != null)
+            _context.Entry(cubierta).Property("UbicacionIdUbicacion").CurrentValue = null;
+    }
+
     await _context.SaveChangesAsync();
     return Ok();
 }
