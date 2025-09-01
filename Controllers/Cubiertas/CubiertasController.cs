@@ -169,10 +169,11 @@ public async Task<IActionResult> ActualizarEstadoCubierta(string nroSerie, [From
         if (montajeActual != null)
         {
             montajeActual.FechaDesinstalacion = DateTime.Now;
-            montajeActual.MotivoCambio = "a Reparar";
+            // Guardar el motivo del input en el montaje anterior
+            montajeActual.MotivoCambio = body.MotivoCambio;
             _context.MontajesCubierta.Update(montajeActual);
 
-            // Insertar nuevo movimiento de desmontaje solo con los campos obligatorios
+            // El nuevo montaje siempre con motivo 'a Reparar'
             var nuevoMontaje = new MontajeCubierta
             {
                 IdCubierta = cubierta.IdCubierta,
@@ -182,7 +183,6 @@ public async Task<IActionResult> ActualizarEstadoCubierta(string nroSerie, [From
                 FechaMontaje = DateTime.Now,
                 FechaDesinstalacion = DateTime.Now,
                 Cubierta = cubierta
-                // No asignar Colectivo ni UbicacionCubierta
             };
             _context.MontajesCubierta.Add(nuevoMontaje);
         }

@@ -4,9 +4,10 @@ namespace ApiSwagger.Dtos
 {
     public class EstadoCubiertaDto
     {
-        public string Estado { get; set; } = string.Empty;
-        public DateTime? FechaRecapada { get; set; }
-        public DateTime? FechaDobleRecapada { get; set; }
+    public string Estado { get; set; } = string.Empty;
+    public DateTime? FechaRecapada { get; set; }
+    public DateTime? FechaDobleRecapada { get; set; }
+    public string MotivoCambio { get; set; } = string.Empty;
     }
 
     public class CubiertaDto
