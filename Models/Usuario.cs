@@ -14,7 +14,7 @@ namespace ApiSwagger.Models
     [Required]
     public required string NombreUsuario { get; set; }
     [Required]
-    public required string ContraseñaHash { get; set; }
+    public required string Contraseña { get; set; }
     [Required]
     public RolUsuario Rol { get; set; }
     }

@@ -20,7 +20,7 @@ namespace webApi.Controllers.Usuarios
 
         // Solo el administrador puede crear usuarios
         [HttpPost("registrar")]
-    public IActionResult Registrar([FromBody] UsuarioRegistroDto usuarioDto)
+        public IActionResult Registrar([FromBody] UsuarioRegistroDto usuarioDto)
         {
             // Aquí deberías validar que el usuario actual es administrador
             // ...validación de rol...
@@ -31,7 +31,7 @@ namespace webApi.Controllers.Usuarios
             var usuario = new Usuario
             {
                 NombreUsuario = usuarioDto.NombreUsuario,
-                ContraseñaHash = HashPassword(usuarioDto.Contraseña),
+                Contraseña = usuarioDto.Contraseña,
                 Rol = usuarioDto.Rol
             };
             _context.Usuarios.Add(usuario);
@@ -40,10 +40,10 @@ namespace webApi.Controllers.Usuarios
         }
 
         [HttpPost("login")]
-    public IActionResult Login([FromBody] UsuarioLoginDto usuarioDto)
+        public IActionResult Login([FromBody] UsuarioLoginDto usuarioDto)
         {
             var usuario = _context.Usuarios.FirstOrDefault(u => u.NombreUsuario == usuarioDto.NombreUsuario);
-            if (usuario == null || usuario.ContraseñaHash != HashPassword(usuarioDto.Contraseña))
+            if (usuario == null || usuario.Contraseña != usuarioDto.Contraseña)
                 return Unauthorized("Usuario o contraseña incorrectos");
 
             // Aquí deberías generar y devolver un JWT con el rol
@@ -51,13 +51,46 @@ namespace webApi.Controllers.Usuarios
             return Ok(new { mensaje = "Login exitoso", rol = usuario.Rol.ToString() });
         }
 
-        private string HashPassword(string password)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return BitConverter.ToString(bytes).Replace("-", "").ToLower();
-            }
-        }
+    // Listado de usuarios (con contraseña en texto plano)
+    [HttpGet("listado")]
+    public IActionResult ListadoUsuarios()
+    {
+        var usuarios = _context.Usuarios.ToList();
+        var usuariosListado = usuarios.Select(u => new {
+            u.Id,
+            u.NombreUsuario,
+            Contraseña = u.Contraseña,
+            u.Rol
+        });
+        return Ok(usuariosListado);
+    }
+
+    // Baja de usuario
+    [HttpDelete("baja/{id}")]
+    public IActionResult BajaUsuario(int id)
+    {
+        var usuario = _context.Usuarios.Find(id);
+        if (usuario == null)
+            return NotFound("Usuario no encontrado");
+        _context.Usuarios.Remove(usuario);
+        _context.SaveChanges();
+        return Ok("Usuario eliminado correctamente");
+    }
+
+    // Modificación de usuario
+    [HttpPut("modificar/{id}")]
+    public IActionResult ModificarUsuario(int id, [FromBody] UsuarioRegistroDto usuarioDto)
+    {
+        var usuario = _context.Usuarios.Find(id);
+        if (usuario == null)
+            return NotFound("Usuario no encontrado");
+        usuario.NombreUsuario = usuarioDto.NombreUsuario;
+        usuario.Contraseña = usuarioDto.Contraseña;
+        usuario.Rol = usuarioDto.Rol;
+        _context.SaveChanges();
+        return Ok("Usuario modificado correctamente");
+    }
+
+    // ...eliminado método de hash y deshasheo...
     }
 }
