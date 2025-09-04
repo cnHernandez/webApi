@@ -73,9 +73,9 @@ namespace ApiSwagger.Controllers.Cubiertas
                         entry.Property("UbicacionIdUbicacion").CurrentValue = null;
                     _context.Cubiertas.Update(cubiertaReemplazada);
                 }
-                // Marcar fecha de desinstalación en el montaje anterior
+                // Marcar fecha de desinstalación en el montaje anterior y motivo del front
                 montajeEnUbicacion.FechaDesinstalacion = DateTime.Now;
-                montajeEnUbicacion.MotivoCambio = "Reemplazada por otra cubierta";
+                montajeEnUbicacion.MotivoCambio = dto.MotivoCambio;
                 _context.MontajesCubierta.Update(montajeEnUbicacion);
             }
 
