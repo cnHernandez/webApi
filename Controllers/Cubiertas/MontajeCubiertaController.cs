@@ -44,27 +44,41 @@ namespace ApiSwagger.Controllers.Cubiertas
         [HttpPost]
         public async Task<IActionResult> CrearMontaje([FromBody] MontajeCubiertaDto dto)
         {
-            // Desasignar cubierta anterior si existe
+            // Buscar el montaje actual de la cubierta (sin desinstalación)
             var montajeActual = await _context.MontajesCubierta
-                .Where(m => m.IdColectivo == dto.IdColectivo && m.IdUbicacion == dto.IdUbicacion && m.FechaDesinstalacion == null)
+                .Where(m => m.IdCubierta == dto.IdCubierta && m.FechaDesinstalacion == null)
+                .OrderByDescending(m => m.FechaMontaje)
                 .FirstOrDefaultAsync();
             if (montajeActual != null)
             {
                 montajeActual.FechaDesinstalacion = DateTime.Now;
-                // Guardar motivo solo en el montaje desinstalado
                 montajeActual.MotivoCambio = dto.MotivoCambio;
-                // Desasignar la cubierta anterior
-                var cubiertaAnterior = await _context.Cubiertas.FindAsync(montajeActual.IdCubierta);
-                if (cubiertaAnterior != null)
-                {
-                    cubiertaAnterior.IdColectivo = 0;
-                    cubiertaAnterior.Ubicacion = null;
-                    var entry = _context.Entry(cubiertaAnterior);
-                    entry.Property("UbicacionIdUbicacion").CurrentValue = null;
-                    _context.Cubiertas.Update(cubiertaAnterior);
-                }
                 _context.MontajesCubierta.Update(montajeActual);
             }
+
+            // Si ya hay una cubierta en ese colectivo y ubicación, desasignar la cubierta reemplazada
+            var montajeEnUbicacion = await _context.MontajesCubierta
+                .Where(m => m.IdColectivo == dto.IdColectivo && m.IdUbicacion == dto.IdUbicacion && m.FechaDesinstalacion == null)
+                .FirstOrDefaultAsync();
+            if (montajeEnUbicacion != null && montajeEnUbicacion.IdCubierta != dto.IdCubierta)
+            {
+                // Desasignar colectivo y ubicación de la cubierta reemplazada
+                var cubiertaReemplazada = await _context.Cubiertas.FindAsync(montajeEnUbicacion.IdCubierta);
+                if (cubiertaReemplazada != null)
+                {
+                    cubiertaReemplazada.IdColectivo = null;
+                    cubiertaReemplazada.Ubicacion = null;
+                    var entry = _context.Entry(cubiertaReemplazada);
+                    if (entry.Property("UbicacionIdUbicacion") != null)
+                        entry.Property("UbicacionIdUbicacion").CurrentValue = null;
+                    _context.Cubiertas.Update(cubiertaReemplazada);
+                }
+                // Marcar fecha de desinstalación en el montaje anterior
+                montajeEnUbicacion.FechaDesinstalacion = DateTime.Now;
+                montajeEnUbicacion.MotivoCambio = "Reemplazada por otra cubierta";
+                _context.MontajesCubierta.Update(montajeEnUbicacion);
+            }
+
             // Crear nuevo montaje SIN motivo de cambio
             var cubierta = await _context.Cubiertas.FindAsync(dto.IdCubierta);
             var colectivo = await _context.Colectivos.FindAsync(dto.IdColectivo);
