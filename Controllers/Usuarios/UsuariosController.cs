@@ -31,7 +31,7 @@ namespace webApi.Controllers.Usuarios
             var usuario = new Usuario
             {
                 NombreUsuario = usuarioDto.NombreUsuario,
-                Contraseña = usuarioDto.Contraseña,
+                Contrasena = usuarioDto.Contrasena,
                 Rol = usuarioDto.Rol
             };
             _context.Usuarios.Add(usuario);
@@ -43,7 +43,7 @@ namespace webApi.Controllers.Usuarios
         public IActionResult Login([FromBody] UsuarioLoginDto usuarioDto)
         {
             var usuario = _context.Usuarios.FirstOrDefault(u => u.NombreUsuario == usuarioDto.NombreUsuario);
-            if (usuario == null || usuario.Contraseña != usuarioDto.Contraseña)
+            if (usuario == null || usuario.Contrasena != usuarioDto.Contrasena)
                 return Unauthorized("Usuario o contraseña incorrectos");
 
             // Aquí deberías generar y devolver un JWT con el rol
@@ -59,7 +59,7 @@ namespace webApi.Controllers.Usuarios
         var usuariosListado = usuarios.Select(u => new {
             u.Id,
             u.NombreUsuario,
-            Contraseña = u.Contraseña,
+            Contrasena = u.Contrasena,
             u.Rol
         });
         return Ok(usuariosListado);
@@ -85,7 +85,7 @@ namespace webApi.Controllers.Usuarios
         if (usuario == null)
             return NotFound("Usuario no encontrado");
         usuario.NombreUsuario = usuarioDto.NombreUsuario;
-        usuario.Contraseña = usuarioDto.Contraseña;
+        usuario.Contrasena = usuarioDto.Contrasena;
         usuario.Rol = usuarioDto.Rol;
         _context.SaveChanges();
         return Ok("Usuario modificado correctamente");

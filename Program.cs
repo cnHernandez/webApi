@@ -15,33 +15,32 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ApiSwagger.Data.AppDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 0))
+        new MySqlServerVersion(new Version(8, 0, 0)),
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure()
     )
 );
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact",
-        policy => policy.WithOrigins("http://localhost:5174", "http://localhost:5173")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
+        policy => policy
+            .WithOrigins("http://localhost:8080","http://localhost:5173", "http://localhost:5174")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+    );
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
 
-// Habilitar CORS para la política AllowReact
+
+
+app.UseRouting();
 app.UseCors("AllowReact");
-
-// Map controllers
 app.MapControllers();
 
 app.Run();
