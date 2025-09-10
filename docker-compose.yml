@@ -23,5 +23,13 @@ services:
   # volumes:
   #   - .:/app
 
+  ui:
+    build:
+      context: ./ui
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
 volumes:
   db_data:

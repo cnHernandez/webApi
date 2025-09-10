@@ -31,6 +31,7 @@ namespace ApiSwagger.Controllers.Cubiertas
                 Estado = Enum.TryParse<EstadoCubierta>(cubiertaDto.EstadoInfo.Estado, true, out var estadoEnum) ? estadoEnum : EstadoCubierta.Nueva,
                 FechaRecapada = cubiertaDto.EstadoInfo.FechaRecapada,
                 FechaDobleRecapada = cubiertaDto.EstadoInfo.FechaDobleRecapada,
+                FechaTripleRecapada = cubiertaDto.EstadoInfo.FechaTripleRecapada,
                 IdColectivo = cubiertaDto.IdColectivo == 0 ? null : cubiertaDto.IdColectivo,
                 Ubicacion = (cubiertaDto.IdUbicacion == 0) ? null : await _context.UbicacionesCubierta.FindAsync(cubiertaDto.IdUbicacion)
             };
@@ -48,7 +49,8 @@ namespace ApiSwagger.Controllers.Cubiertas
                 {
                     Estado = cubierta.Estado.ToString(),
                     FechaRecapada = cubierta.FechaRecapada,
-                    FechaDobleRecapada = cubierta.FechaDobleRecapada
+                    FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                    FechaTripleRecapada = cubierta.FechaTripleRecapada
                 },
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
@@ -77,10 +79,12 @@ namespace ApiSwagger.Controllers.Cubiertas
                     {
                         Estado = cubierta.Estado.ToString(),
                         FechaRecapada = cubierta.FechaRecapada,
-                        FechaDobleRecapada = cubierta.FechaDobleRecapada
+                        FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                        FechaTripleRecapada = cubierta.FechaTripleRecapada
                     },
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                    FechaTripleRecapada = cubierta.FechaTripleRecapada,
                     FechaReparacion = cubierta.FechaReparacion,
                     IdColectivo = cubierta.IdColectivo ?? 0,
                     IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
@@ -108,10 +112,12 @@ namespace ApiSwagger.Controllers.Cubiertas
                 {
                     Estado = cubierta.Estado.ToString(),
                     FechaRecapada = cubierta.FechaRecapada,
-                    FechaDobleRecapada = cubierta.FechaDobleRecapada
+                    FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                    FechaTripleRecapada = cubierta.FechaTripleRecapada
                 },
                 FechaRecapada = cubierta.FechaRecapada,
                 FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                FechaTripleRecapada = cubierta.FechaTripleRecapada,
                 FechaReparacion = cubierta.FechaReparacion,
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
@@ -137,10 +143,12 @@ namespace ApiSwagger.Controllers.Cubiertas
                 {
                     Estado = cubierta.Estado.ToString(),
                     FechaRecapada = cubierta.FechaRecapada,
-                    FechaDobleRecapada = cubierta.FechaDobleRecapada
+                    FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                    FechaTripleRecapada = cubierta.FechaTripleRecapada
                 },
                 FechaRecapada = cubierta.FechaRecapada,
                 FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                FechaTripleRecapada = cubierta.FechaTripleRecapada,
                 FechaReparacion = cubierta.FechaReparacion,
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
@@ -166,6 +174,8 @@ namespace ApiSwagger.Controllers.Cubiertas
                 cubierta.FechaRecapada = body.FechaRecapada.Value;
             if (estadoEnum == EstadoCubierta.DobleRecapada && body.FechaDobleRecapada.HasValue)
                 cubierta.FechaDobleRecapada = body.FechaDobleRecapada.Value;
+            if (estadoEnum == EstadoCubierta.TripleRecapada && body.FechaTripleRecapada.HasValue)
+                cubierta.FechaTripleRecapada = body.FechaTripleRecapada.Value;
 
             // Si pasa a EnReparacion, desmontar la cubierta
             if (estadoEnum == EstadoCubierta.EnReparacion)
