@@ -10,6 +10,13 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - webnet
 
   api:
     build: .
@@ -20,16 +27,15 @@ services:
       - ASPNETCORE_URLS=http://+:80
     ports:
       - "5058:80"
+    networks:
+      - webnet
   # volumes:
   #   - .:/app
 
-  ui:
-    build:
-      context: ./ui
-    ports:
-      - "8080:80"
-    depends_on:
-      - api
 
 volumes:
   db_data:
+
+networks:
+  webnet:
+    external: true
