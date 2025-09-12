@@ -32,6 +32,7 @@ namespace ApiSwagger.Controllers.Cubiertas
                 FechaRecapada = cubiertaDto.EstadoInfo.FechaRecapada,
                 FechaDobleRecapada = cubiertaDto.EstadoInfo.FechaDobleRecapada,
                 FechaTripleRecapada = cubiertaDto.EstadoInfo.FechaTripleRecapada,
+                FechaEmparchada = cubiertaDto.EstadoInfo.FechaEmparchada,
                 IdColectivo = cubiertaDto.IdColectivo == 0 ? null : cubiertaDto.IdColectivo,
                 Ubicacion = (cubiertaDto.IdUbicacion == 0) ? null : await _context.UbicacionesCubierta.FindAsync(cubiertaDto.IdUbicacion)
             };
@@ -50,8 +51,14 @@ namespace ApiSwagger.Controllers.Cubiertas
                     Estado = cubierta.Estado.ToString(),
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada,
-                    FechaTripleRecapada = cubierta.FechaTripleRecapada
+                    FechaTripleRecapada = cubierta.FechaTripleRecapada,
+                    FechaEmparchada = cubierta.FechaEmparchada
                 },
+                FechaRecapada = cubierta.FechaRecapada,
+                FechaDobleRecapada = cubierta.FechaDobleRecapada,
+                FechaTripleRecapada = cubierta.FechaTripleRecapada,
+                FechaEmparchada = cubierta.FechaEmparchada,
+                FechaReparacion = cubierta.FechaReparacion,
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
                 UbicacionDescripcion = cubierta.Ubicacion?.Descripcion ?? string.Empty
@@ -80,11 +87,13 @@ namespace ApiSwagger.Controllers.Cubiertas
                         Estado = cubierta.Estado.ToString(),
                         FechaRecapada = cubierta.FechaRecapada,
                         FechaDobleRecapada = cubierta.FechaDobleRecapada,
-                        FechaTripleRecapada = cubierta.FechaTripleRecapada
+                        FechaTripleRecapada = cubierta.FechaTripleRecapada,
+                        FechaEmparchada = cubierta.FechaEmparchada
                     },
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada,
                     FechaTripleRecapada = cubierta.FechaTripleRecapada,
+                    FechaEmparchada = cubierta.FechaEmparchada,
                     FechaReparacion = cubierta.FechaReparacion,
                     IdColectivo = cubierta.IdColectivo ?? 0,
                     IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
@@ -113,11 +122,13 @@ namespace ApiSwagger.Controllers.Cubiertas
                     Estado = cubierta.Estado.ToString(),
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada,
-                    FechaTripleRecapada = cubierta.FechaTripleRecapada
+                    FechaTripleRecapada = cubierta.FechaTripleRecapada,
+                    FechaEmparchada = cubierta.FechaEmparchada
                 },
                 FechaRecapada = cubierta.FechaRecapada,
                 FechaDobleRecapada = cubierta.FechaDobleRecapada,
                 FechaTripleRecapada = cubierta.FechaTripleRecapada,
+                FechaEmparchada = cubierta.FechaEmparchada,
                 FechaReparacion = cubierta.FechaReparacion,
                 IdColectivo = cubierta.IdColectivo ?? 0,
                 IdUbicacion = cubierta.Ubicacion?.IdUbicacion ?? 0,
@@ -144,7 +155,8 @@ namespace ApiSwagger.Controllers.Cubiertas
                     Estado = cubierta.Estado.ToString(),
                     FechaRecapada = cubierta.FechaRecapada,
                     FechaDobleRecapada = cubierta.FechaDobleRecapada,
-                    FechaTripleRecapada = cubierta.FechaTripleRecapada
+                    FechaTripleRecapada = cubierta.FechaTripleRecapada,
+                    FechaEmparchada = cubierta.FechaEmparchada
                 },
                 FechaRecapada = cubierta.FechaRecapada,
                 FechaDobleRecapada = cubierta.FechaDobleRecapada,
@@ -176,6 +188,8 @@ namespace ApiSwagger.Controllers.Cubiertas
                 cubierta.FechaDobleRecapada = body.FechaDobleRecapada.Value;
             if (estadoEnum == EstadoCubierta.TripleRecapada && body.FechaTripleRecapada.HasValue)
                 cubierta.FechaTripleRecapada = body.FechaTripleRecapada.Value;
+            if (estadoEnum == EstadoCubierta.Emparchada && body.FechaEmparchada.HasValue)
+                cubierta.FechaEmparchada = body.FechaEmparchada.Value;
 
             // Si pasa a EnReparacion, desmontar la cubierta
             if (estadoEnum == EstadoCubierta.EnReparacion)
