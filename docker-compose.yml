@@ -30,9 +30,6 @@ services:
       - "5058:80"
     networks:
       - webnet
-  # volumes:
-  #   - .:/app
-
 
 volumes:
   db_data:

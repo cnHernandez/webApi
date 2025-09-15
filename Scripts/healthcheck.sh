@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Cargar variables de entorno desde el archivo .env
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+else
+    echo "\033[1;31m❌ Archivo .env no encontrado.\033[0m"
+    exit 1
+fi
+
 # Configuración
 API_URL='http://localhost:5058/api/health'
 
@@ -44,10 +52,16 @@ format_json "$body"
 # Evaluar estado
 if [ "$status_code" -eq 200 ]; then
     echo  "\n\033[1;32m✅ API funcionando correctamente\033[0m"
-elif [ "$status_code" -ge 500 ]; then
-    echo  "\n\033[1;31m❌ Error interno del servidor\033[0m"
+elif [ "$status_code" -eq 503 ]; then
+    echo  "\n\033[1;31m❌ Servicio no disponible\033[0m"
+    echo  "\033[1;36mDetalles:\033[0m"
+    format_json "$body"
 elif [ "$status_code" -ge 400 ]; then
     echo  "\n\033[1;31m⚠️  Problema con la solicitud\033[0m"
+    echo  "\033[1;36mDetalles:\033[0m"
+    format_json "$body"
 else
     echo  "\n\033[1;33m⚠️  Estado inesperado\033[0m"
+    echo  "\033[1;36mDetalles:\033[0m"
+    format_json "$body"
 fi

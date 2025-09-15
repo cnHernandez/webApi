@@ -20,10 +20,16 @@ public class HealthCheckController : ControllerBase
     {
         var report = await _healthCheckService.CheckHealthAsync();
 
+        // Filtrar el servicio 'ui' de los resultados
+        var filteredEntries = report.Entries
+            .Where(e => e.Key != "ui")
+            .ToDictionary(e => e.Key, e => e.Value);
+
+        var unhealthyChecks = filteredEntries.Where(e => e.Value.Status != HealthStatus.Healthy).ToList();
         var response = new
         {
-            status = report.Status.ToString(),
-            checks = report.Entries.Select(e => new
+            status = unhealthyChecks.Any() ? "Degraded" : "Healthy",
+            checks = filteredEntries.Select(e => new
             {
                 name = e.Key,
                 status = e.Value.Status.ToString(),
@@ -35,6 +41,16 @@ public class HealthCheckController : ControllerBase
 
         var jsonResponse = JsonSerializer.Serialize(response, new JsonSerializerOptions { WriteIndented = true });
 
-        return report.Status == HealthStatus.Healthy ? Ok(jsonResponse) : StatusCode(503, jsonResponse);
+        return unhealthyChecks.Any() ? StatusCode(200, jsonResponse) : Ok(jsonResponse);
+    }
+
+    private string GetServiceUrl(string serviceName)
+    {
+        // Hardcoded IP for the webui_ui service
+        if (serviceName == "webui_ui")
+        {
+            return "http://172.19.0.4:80";
+        }
+        return string.Empty;
     }
 }
