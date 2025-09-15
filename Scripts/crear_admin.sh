@@ -3,16 +3,16 @@
 # Configuración
 API_URL='http://localhost:5058/api/Usuarios/registrar'
 
-username="admin"
-password="admin123"
-rol="Administrador"
+username="admin1"
+password="admin124"
+rol=0  # Eliminado el espacio adicional
 
 # Datos del usuario en formato JSON
 user_data=$(cat <<EOF
 {
   "nombreUsuario": "$username",
   "contrasena": "$password",
-  "rol": "$rol"
+  "rol": $rol
 }
 EOF
 )
@@ -32,6 +32,21 @@ echo "│ \033[1;33mUsuario:\033[0m \033[1;32m$username\033[0m"
 echo "│ \033[1;33mPassword:\033[0m \033[1;32m$password\033[0m"
 echo "│ \033[1;33mRol:\033[0m \033[1;32m$rol\033[0m"
 echo "└────────────────────────────────────────────┘\n"
+
+# Cargar variables de entorno desde el archivo .env
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+    if [ -z "$API_KEY" ]; then
+        echo "\033[1;31m❌ API_KEY no se cargó correctamente desde el archivo .env.\033[0m"
+        exit 1
+    fi
+else
+    echo "\033[1;31m❌ Archivo .env no encontrado.\033[0m"
+    exit 1
+fi
+
+# Mostrar el valor de la API Key para depuración
+echo "\033[1;33m🔑 API_KEY cargada: $API_KEY\033[0m"
 
 # Realizar la petición
 echo "\033[1;33m🔄 Enviando datos al servidor...\033[0m"
