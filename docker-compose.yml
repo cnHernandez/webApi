@@ -25,6 +25,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
+      - API_KEY=${API_KEY}
     ports:
       - "5058:80"
     networks:
