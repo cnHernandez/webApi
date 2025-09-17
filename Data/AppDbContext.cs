@@ -24,6 +24,17 @@ namespace ApiSwagger.Data
                 new UbicacionCubierta { IdUbicacion = 5, Descripcion = "Trasera Izquierda Externa" },
                 new UbicacionCubierta { IdUbicacion = 6, Descripcion = "Trasera Izquierda Interna" }
             );
+
+            // Configurar el mapeo de DateOnly como tipo de fecha en la base de datos
+            modelBuilder.Entity<Colectivo>().Property(c => c.VtoVTV)
+                .HasConversion(
+                    v => v.HasValue ? v.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null,
+                    v => v.HasValue ? DateOnly.FromDateTime(v.Value) : (DateOnly?)null
+                );
+
+            // Configurar IdColectivo como clave primaria autoincremental
+            modelBuilder.Entity<Colectivo>().Property(c => c.IdColectivo)
+                .ValueGeneratedOnAdd();
         }
     }
 }
