@@ -12,6 +12,7 @@ namespace ApiSwagger.Data
     public DbSet<UbicacionCubierta> UbicacionesCubierta { get; set; }
     public DbSet<MontajeCubierta> MontajesCubierta { get; set; }
     public DbSet<Usuario> Usuarios { get; set; }
+    public DbSet<CambioAceite> CambiosAceite { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

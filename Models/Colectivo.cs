@@ -18,6 +18,7 @@ namespace ApiSwagger.Models
         public EstadoColectivo Estado { get; set; } = EstadoColectivo.Activo;
         public DateOnly? VtoVTV { get; set; }
         public int? Kilometraje { get; set; }
-       
+        // Relación con cambios de aceite
+        public ICollection<CambioAceite>? CambiosAceite { get; set; }
     }
 }
