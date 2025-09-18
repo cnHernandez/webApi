@@ -36,17 +36,17 @@ echo "└───────────────────────�
 # Cargar variables de entorno desde el archivo .env
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
-    if [ -z "$API_KEY" ]; then
-        echo "\033[1;31m❌ API_KEY no se cargó correctamente desde el archivo .env.\033[0m"
-        exit 1
-    fi
+    echo "\033[1;33m🔑 API_KEY cargada: $API_KEY\033[0m" # Log temporal para verificar la carga
 else
     echo "\033[1;31m❌ Archivo .env no encontrado.\033[0m"
     exit 1
 fi
 
-# Mostrar el valor de la API Key para depuración
-echo "\033[1;33m🔑 API_KEY cargada: $API_KEY\033[0m"
+# Verificar si la API_KEY está configurada
+if [ -z "$API_KEY" ]; then
+    echo "\033[1;31m❌ API_KEY no está configurada en las variables de entorno.\033[0m"
+    exit 1
+fi
 
 # Realizar la petición
 echo "\033[1;33m🔄 Enviando datos al servidor...\033[0m"

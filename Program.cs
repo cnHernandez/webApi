@@ -61,14 +61,15 @@ builder.Services.AddDbContext<ApiSwagger.Data.AppDbContext>(options =>
     )
 );
 
+// Configurar CORS para permitir cualquier origen temporalmente durante el desarrollo
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReact",
-        policy => policy
-            .WithOrigins("http://localhost:8080","http://localhost:5173", "http://localhost:5174")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-    );
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 var app = builder.Build();
@@ -79,14 +80,15 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 // Middleware de API Key global
-app.UseMiddleware<ApiSwagger.ApiKeyMiddleware>();
+app.UseMiddleware<ApiSwagger.ApiKeyMiddleware>(builder.Configuration);
 // Middleware de manejo de excepciones
 app.UseMiddleware<ApiSwagger.Middleware.ExceptionMiddleware>();
 // Middleware de autenticación por roles (requiere que el usuario esté autenticado)
 app.UseMiddleware<ApiSwagger.Middleware.AuthenticationMiddleware>();
 
 app.UseRouting();
-app.UseCors("AllowReact");
+// Usar la política de CORS para permitir cualquier origen
+app.UseCors("AllowAll");
 
 app.MapControllers();
 
