@@ -1,4 +1,5 @@
 
+
 using Microsoft.AspNetCore.Mvc;
 using ApiSwagger.Data;
 using ApiSwagger.Models;
@@ -109,25 +110,28 @@ namespace ApiSwagger.Controllers.Colectivos
             if (colectivo == null)
                 return NotFound($"No existe el colectivo {nroColectivo}");
 
-            // Calcular fecha de vencimiento (1 año después de la realización)
+            // Calcular fechas
             var fechaRealizacion = dto.FechaRealizacion;
-            var fechaVencimiento = fechaRealizacion.AddYears(1);
+            var fechaVencimientoNueva = fechaRealizacion.AddYears(1);
 
-            // Guardar historial usando IdColectivo como FK
+            // Guardar historial usando IdColectivo como FK y la fecha de vencimiento anterior
             var historial = new HistorialVtv
             {
                 IdColectivo = colectivo.IdColectivo,
                 FechaRealizacion = fechaRealizacion,
-                FechaVencimiento = fechaVencimiento
+                FechaVencimiento = colectivo.VtoVTV != null
+                    ? colectivo.VtoVTV.Value.ToDateTime(TimeOnly.MinValue)
+                    : fechaRealizacion // o DateTime.MinValue si prefieres un valor por defecto
             };
             _context.HistorialesVtv.Add(historial);
 
             // Actualizar vencimiento en el colectivo
-            colectivo.VtoVTV = DateOnly.FromDateTime(fechaVencimiento);
+            colectivo.VtoVTV = DateOnly.FromDateTime(fechaVencimientoNueva);
             await _context.SaveChangesAsync();
 
             // Devolver ambos: historial y colectivo actualizado
-            return Ok(new {
+            return Ok(new
+            {
                 historial = new Dtos.HistorialVtvDto
                 {
                     Id = historial.Id,
@@ -137,6 +141,16 @@ namespace ApiSwagger.Controllers.Colectivos
                 },
                 colectivo
             });
+        }
+           // DELETE /colectivos/{id} (baja física)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarColectivo(int id)
+        {
+            var colectivo = await _context.Colectivos.FindAsync(id);
+            if (colectivo == null) return NotFound();
+            _context.Colectivos.Remove(colectivo);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }
