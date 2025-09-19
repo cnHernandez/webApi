@@ -148,7 +148,39 @@ namespace ApiSwagger.Controllers.Colectivos
         {
             var colectivo = await _context.Colectivos.FindAsync(id);
             if (colectivo == null) return NotFound();
-            _context.Colectivos.Remove(colectivo);
+
+            // Dar de baja todos los montajes activos de este colectivo
+            var montajes = await _context.MontajesCubierta
+                .Where(m => m.IdColectivo == id && m.FechaDesinstalacion == null)
+                .ToListAsync();
+            foreach (var montaje in montajes)
+            {
+                montaje.FechaDesinstalacion = DateTime.Now;
+                montaje.MotivoCambio = "BAJA COLECTIVO";
+                // Liberar la cubierta asociada
+                var cubierta = await _context.Cubiertas.FindAsync(montaje.IdCubierta);
+                if (cubierta != null)
+                {
+                    cubierta.IdColectivo = null;
+                    cubierta.Ubicacion = null;
+                    try
+                    {
+                        var prop = _context.Entry(cubierta).Property("IdUbicacion");
+                        if (prop != null) prop.CurrentValue = null;
+                    }
+                    catch { /* ignorar si no existe */ }
+                    var propDesc = cubierta.GetType().GetProperty("UbicacionDescripcion");
+                    if (propDesc != null && propDesc.CanWrite)
+                        propDesc.SetValue(cubierta, string.Empty);
+                    // Limpiar también UbicacionIdUbicacion si existe
+                    var entry = _context.Entry(cubierta);
+                    if (entry.Property("UbicacionIdUbicacion") != null)
+                        entry.Property("UbicacionIdUbicacion").CurrentValue = null;
+                }
+            }
+
+            // Baja lógica: cambiar estado
+            colectivo.Estado = EstadoColectivo.FueraDeServicio;
             await _context.SaveChangesAsync();
             return NoContent();
         }
