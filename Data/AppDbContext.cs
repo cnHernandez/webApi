@@ -7,12 +7,14 @@ namespace ApiSwagger.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+
     public DbSet<Colectivo> Colectivos { get; set; }
     public DbSet<Cubierta> Cubiertas { get; set; }
     public DbSet<UbicacionCubierta> UbicacionesCubierta { get; set; }
     public DbSet<MontajeCubierta> MontajesCubierta { get; set; }
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<CambioAceite> CambiosAceite { get; set; }
+    public DbSet<HistorialVtv> HistorialesVtv { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
