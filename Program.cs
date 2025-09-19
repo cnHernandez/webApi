@@ -8,6 +8,26 @@ using HealthChecks.Uris;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Permitir ejecución especial para procesamiento de CSVs
+if (args.Length > 0 && args[0] == "--process-csvs")
+{
+    var config = builder.Configuration;
+    var services = new ServiceCollection();
+    services.AddDbContext<ApiSwagger.Data.AppDbContext>(options =>
+        options.UseMySql(
+            config.GetConnectionString("DefaultConnection"),
+            new MySqlServerVersion(new Version(8, 0, 0))
+        )
+    );
+    var provider = services.BuildServiceProvider();
+    var db = provider.GetRequiredService<ApiSwagger.Data.AppDbContext>();
+    var csvFolder = "/app/kmColectivos";
+    var service = new ApiSwagger.Services.CsvKilometrajeService(db, csvFolder);
+    service.ProcesarArchivosCsv();
+    Console.WriteLine("Procesamiento de archivos CSV finalizado.");
+    return;
+}
+
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

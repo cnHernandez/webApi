@@ -28,6 +28,8 @@ services:
       - API_KEY=${API_KEY}
     ports:
       - "5058:80"
+    volumes:
+      - /home/gavila/Escritorio/kmColectivos:/app/kmColectivos
     networks:
       - webnet
 
