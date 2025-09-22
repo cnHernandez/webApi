@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using ApiSwagger.Models;
 using ApiSwagger.Data;
 
+
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using HealthChecks.Uris;
+using Amazon.S3;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,16 +21,20 @@ if (args.Length > 0 && args[0] == "--process-csvs")
             new MySqlServerVersion(new Version(8, 0, 0))
         )
     );
+    services.AddAWSService<IAmazonS3>();
+
     var provider = services.BuildServiceProvider();
     var db = provider.GetRequiredService<ApiSwagger.Data.AppDbContext>();
-    var csvFolder = "/app/kmColectivos";
-    var service = new ApiSwagger.Services.CsvKilometrajeService(db, csvFolder);
+    var s3 = provider.GetRequiredService<IAmazonS3>();
+    var bucketName = config["S3Bucket"] ?? "kilometrajesube";
+    var service = new ApiSwagger.Services.CsvKilometrajeService(db, s3, bucketName);
     service.ProcesarArchivosCsv();
     Console.WriteLine("Procesamiento de archivos CSV finalizado.");
     return;
 }
 
 // Add services to the container.
+builder.Services.AddAWSService<IAmazonS3>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

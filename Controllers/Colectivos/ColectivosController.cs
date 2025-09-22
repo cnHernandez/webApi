@@ -112,7 +112,22 @@ namespace ApiSwagger.Controllers.Colectivos
 
             // Calcular fechas
             var fechaRealizacion = dto.FechaRealizacion;
-            var fechaVencimientoNueva = fechaRealizacion.AddYears(1);
+            int mesesVto = 12; // valor por defecto
+            int anioActual = DateTime.Now.Year;
+            int anioModelo = 0;
+            if (!string.IsNullOrEmpty(colectivo.Modelo) && int.TryParse(colectivo.Modelo, out anioModelo))
+            {
+                if (anioActual - anioModelo >= 10)
+                {
+                    mesesVto = 4;
+                }
+                else
+                {
+                    mesesVto = 6;
+                }
+            }
+            // Si no se puede parsear el modelo, dejar 12 meses como fallback
+            var fechaVencimientoNueva = fechaRealizacion.AddMonths(mesesVto);
 
             // Guardar historial usando IdColectivo como FK y la fecha de vencimiento anterior
             var historial = new HistorialVtv
