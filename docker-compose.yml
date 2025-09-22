@@ -28,8 +28,7 @@ services:
       - API_KEY=${API_KEY}
     ports:
       - "5058:80"
-    volumes:
-      - /home/gavila/Escritorio/kmColectivos:/app/kmColectivos
+    # volumes: eliminado, ahora se usa S3
     networks:
       - webnet
 

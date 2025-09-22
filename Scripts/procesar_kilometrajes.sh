@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script para ejecutar el procesamiento de archivos CSV de kilometraje
 
-cd /home/gavila/721/webApi || exit 1
+cd /home/ubuntu/web-api || exit 1
 
-dotnet run --process-csvs
+docker-compose run --rm api dotnet ApiSwagger.dll --process-csvs

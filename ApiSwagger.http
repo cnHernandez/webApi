@@ -1,4 +1,4 @@
-@ApiSwagger_HostAddress = http://localhost:5058
+@ApiSwagger_HostAddress = http://3.145.26.78:5058
 
 GET {{ApiSwagger_HostAddress}}/weatherforecast/
 Accept: application/json
