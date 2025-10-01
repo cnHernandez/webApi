@@ -57,6 +57,7 @@ namespace ApiSwagger.Services
 
             int filasProcesadas = 0;
             int colectivosActualizados = 0;
+            var internosContador = new Dictionary<string, int>();
             while (!reader.EndOfStream)
             {
                 var linea = reader.ReadLine();
@@ -65,6 +66,12 @@ namespace ApiSwagger.Services
                 if (datos.Length <= Math.Max(idxInterno, idxKm)) continue;
                 var interno = datos[idxInterno].Trim();
                 var kmStr = datos[idxKm].Trim().Replace(",", "."); // Asegura punto decimal
+
+                // Contador por interno
+                if (!internosContador.ContainsKey(interno))
+                    internosContador[interno] = 0;
+                internosContador[interno]++;
+
                 Console.WriteLine($"Fila: INTERNO={interno}, KM RECORRIDOS={kmStr}");
                 if (!decimal.TryParse(kmStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal kmRecorridos))
                 {
@@ -88,6 +95,11 @@ namespace ApiSwagger.Services
             }
             _context.SaveChanges();
             Console.WriteLine($"Filas procesadas: {filasProcesadas}, Colectivos actualizados: {colectivosActualizados}");
+            Console.WriteLine("Resumen de filas por interno:");
+            foreach (var kvp in internosContador)
+            {
+                Console.WriteLine($"  INTERNO={kvp.Key}: {kvp.Value} filas");
+            }
         }
 
         private async Task<List<string>> ListarArchivosCsvAsync()
