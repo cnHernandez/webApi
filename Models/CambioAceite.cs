@@ -15,8 +15,8 @@ namespace ApiSwagger.Models
         [Required]
         public DateOnly Fecha { get; set; }
         [Required]
-    public int Kilometros { get; set; }
-    public bool FiltrosCambiados { get; set; }
-    // ...propiedad Observaciones eliminada...
+        public decimal Kilometros { get; set; } // Cambiado de int a decimal
+        public bool FiltrosCambiados { get; set; }
+        // ...propiedad Observaciones eliminada...
     }
 }

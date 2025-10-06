@@ -28,7 +28,7 @@ namespace ApiSwagger.Controllers.CambioAceite
             {
                 ColectivoId = dto.ColectivoId,
                 Fecha = dto.Fecha,
-                Kilometros = dto.Kilometros,
+                Kilometros = dto.Kilometros, // Ahora acepta decimales
                 FiltrosCambiados = dto.FiltrosCambiados
             };
             _context.CambiosAceite.Add(cambio);

@@ -27,6 +27,7 @@ namespace ApiSwagger.Services
         {
             var archivos = ListarArchivosCsvAsync().GetAwaiter().GetResult();
             Console.WriteLine($"Archivos encontrados: {archivos.Count}");
+            string ultimoArchivoProcesado = null;
             foreach (var archivoKey in archivos)
             {
                 Console.WriteLine($"Procesando archivo: {archivoKey}");
@@ -34,6 +35,15 @@ namespace ApiSwagger.Services
                 ProcesarArchivo(stream);
                 MoverArchivoProcesadoAsync(archivoKey).GetAwaiter().GetResult();
                 Console.WriteLine($"Movido a: {_procesadosPrefix}{Path.GetFileName(archivoKey)}");
+                ultimoArchivoProcesado = archivoKey;
+            }
+            if (ultimoArchivoProcesado != null)
+            {
+                Console.WriteLine($"Último archivo procesado: {ultimoArchivoProcesado}");
+            }
+            else
+            {
+                Console.WriteLine("No se procesó ningún archivo.");
             }
         }
 
