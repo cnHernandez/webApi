@@ -1,5 +1,3 @@
-
-
 using Microsoft.AspNetCore.Mvc;
 using ApiSwagger.Data;
 using ApiSwagger.Models;
@@ -198,6 +196,16 @@ namespace ApiSwagger.Controllers.Colectivos
             colectivo.Estado = EstadoColectivo.FueraDeServicio;
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        // GET /colectivos/por-nro/{nroColectivo}
+        [HttpGet("por-nro/{nroColectivo}")]
+        public async Task<IActionResult> GetColectivoPorNro(string nroColectivo)
+        {
+            var colectivo = await _context.Colectivos.FirstOrDefaultAsync(c => c.NroColectivo == nroColectivo);
+            if (colectivo == null)
+                return NotFound();
+            return Ok(colectivo);
         }
     }
 }
