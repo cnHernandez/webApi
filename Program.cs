@@ -13,23 +13,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Permitir ejecución especial para procesamiento de CSVs
 if (args.Length > 0 && args[0] == "--process-csvs")
 {
-    var config = builder.Configuration;
-    var services = new ServiceCollection();
-    services.AddDbContext<ApiSwagger.Data.AppDbContext>(options =>
-        options.UseMySql(
-            config.GetConnectionString("DefaultConnection"),
-            new MySqlServerVersion(new Version(8, 0, 0))
-        )
-    );
-    services.AddAWSService<IAmazonS3>();
-
-    var provider = services.BuildServiceProvider();
-    var db = provider.GetRequiredService<ApiSwagger.Data.AppDbContext>();
-    var s3 = provider.GetRequiredService<IAmazonS3>();
-    var bucketName = config["S3Bucket"] ?? "kilometrajesube";
-    var service = new ApiSwagger.Services.CsvKilometrajeService(db, s3, bucketName);
-    service.ProcesarArchivosCsv();
-    Console.WriteLine("Procesamiento de archivos CSV finalizado.");
+    var csvApp = builder.Build();
+    using (var scope = csvApp.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApiSwagger.Data.AppDbContext>();
+        var s3 = scope.ServiceProvider.GetRequiredService<IAmazonS3>();
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var bucketName = config["S3Bucket"] ?? "kilometrajesube";
+        var service = new ApiSwagger.Services.CsvKilometrajeService(db, s3, bucketName);
+        service.ProcesarArchivosCsv();
+        Console.WriteLine("Procesamiento de archivos CSV finalizado.");
+    }
     return;
 }
 

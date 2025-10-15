@@ -27,7 +27,7 @@ namespace ApiSwagger.Services
         {
             var archivos = ListarArchivosCsvAsync().GetAwaiter().GetResult();
             Console.WriteLine($"Archivos encontrados: {archivos.Count}");
-            string ultimoArchivoProcesado = null;
+            string? ultimoArchivoProcesado = null;
             foreach (var archivoKey in archivos)
             {
                 Console.WriteLine($"Procesando archivo: {archivoKey}");

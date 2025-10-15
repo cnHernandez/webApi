@@ -38,8 +38,35 @@ namespace ApiSwagger.Controllers.Colectivos
         [HttpGet]
         public async Task<IActionResult> GetColectivos()
         {
-            var colectivos = await _context.Colectivos.ToListAsync();
-            return Ok(colectivos);
+            // Traer todos los colectivos y sus cambios de aceite en una sola consulta
+            var colectivos = await _context.Colectivos
+                .Include(c => c.CambiosAceite)
+                .ToListAsync();
+
+            var resultado = colectivos.Select(colectivo =>
+            {
+                var ultimoCambio = colectivo.CambiosAceite?
+                    .OrderByDescending(ca => ca.Fecha)
+                    .FirstOrDefault();
+
+                return new
+                {
+                    idColectivo = colectivo.IdColectivo,
+                    nroColectivo = colectivo.NroColectivo,
+                    patente = colectivo.Patente,
+                    modelo = colectivo.Modelo,
+                    estado = (int)colectivo.Estado,
+                    kilometraje = colectivo.Kilometraje,
+                    vtoVTV = colectivo.VtoVTV?.ToString("yyyy-MM-dd"),
+                    ultimoCambioAceite = ultimoCambio == null ? null : new
+                    {
+                        kilometros = ultimoCambio.Kilometros,
+                        fecha = ultimoCambio.Fecha.ToString("yyyy-MM-dd")
+                    }
+                };
+            }).ToList();
+
+            return Ok(resultado);
         }
 
         // GET /colectivos/{id}
