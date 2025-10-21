@@ -27,19 +27,41 @@ namespace ApiSwagger.Services
         {
             var archivos = ListarArchivosCsvAsync().GetAwaiter().GetResult();
             Console.WriteLine($"Archivos encontrados: {archivos.Count}");
+            
+            if (archivos.Count == 0)
+            {
+                Console.WriteLine("No se encontraron archivos para procesar.");
+                return;
+            }
+            
             string? ultimoArchivoProcesado = null;
+            int totalColectivosActualizados = 0;
+            DateTime fechaUltimoArchivo = DateTime.MinValue;
+            
             foreach (var archivoKey in archivos)
             {
                 Console.WriteLine($"Procesando archivo: {archivoKey}");
                 using var stream = DescargarArchivoAsync(archivoKey).GetAwaiter().GetResult();
-                ProcesarArchivo(stream);
+                int colectivosActualizados = ProcesarArchivo(stream);
+                totalColectivosActualizados += colectivosActualizados;
                 MoverArchivoProcesadoAsync(archivoKey).GetAwaiter().GetResult();
                 Console.WriteLine($"Movido a: {_procesadosPrefix}{Path.GetFileName(archivoKey)}");
                 ultimoArchivoProcesado = archivoKey;
+                
+                // Extraer fecha del nombre del archivo (asumiendo formato con fecha)
+                var fechaArchivo = ExtraerFechaDelNombreArchivo(archivoKey);
+                if (fechaArchivo > fechaUltimoArchivo)
+                {
+                    fechaUltimoArchivo = fechaArchivo;
+                }
             }
+            
             if (ultimoArchivoProcesado != null)
             {
                 Console.WriteLine($"Último archivo procesado: {ultimoArchivoProcesado}");
+                
+                // Guardar información del procesamiento
+                GuardarInformacionProcesamiento(fechaUltimoArchivo, ultimoArchivoProcesado, archivos.Count, totalColectivosActualizados);
             }
             else
             {
@@ -47,14 +69,14 @@ namespace ApiSwagger.Services
             }
         }
 
-        private void ProcesarArchivo(Stream archivoStream)
+        private int ProcesarArchivo(Stream archivoStream)
         {
             using var reader = new StreamReader(archivoStream, Encoding.UTF8, true, 1024, leaveOpen: false);
             string? header = reader.ReadLine();
             if (header == null)
             {
                 Console.WriteLine("Archivo vacío o sin encabezado.");
-                return;
+                return 0;
             }
             var columnas = header.Split(';');
             int idxInterno = Array.FindIndex(columnas, c => c.Trim().ToUpper() == "INTERNO");
@@ -62,7 +84,7 @@ namespace ApiSwagger.Services
             if (idxInterno == -1 || idxKm == -1)
             {
                 Console.WriteLine($"No se encontraron columnas INTERNO o KM RECORRIDOS en el archivo. Encabezado detectado: {header}");
-                return;
+                return 0;
             }
 
             int filasProcesadas = 0;
@@ -110,6 +132,7 @@ namespace ApiSwagger.Services
             {
                 Console.WriteLine($"  INTERNO={kvp.Key}: {kvp.Value} filas");
             }
+            return colectivosActualizados;
         }
 
         private async Task<List<string>> ListarArchivosCsvAsync()
@@ -149,6 +172,72 @@ namespace ApiSwagger.Services
             await _s3Client.CopyObjectAsync(_bucketName, key, _bucketName, destinoKey);
             // Borrar original
             await _s3Client.DeleteObjectAsync(_bucketName, key);
+        }
+
+        private DateTime ExtraerFechaDelNombreArchivo(string nombreArchivo)
+        {
+            try
+            {
+                // Intentar extraer fecha del nombre del archivo
+                // Asumiendo formatos como: "2024-01-15_kilometrajes.csv" o "kilometrajes_2024-01-15.csv"
+                var fileName = Path.GetFileNameWithoutExtension(nombreArchivo);
+                
+                // Buscar patrón de fecha YYYY-MM-DD
+                var datePattern = @"(\d{4}-\d{2}-\d{2})";
+                var match = System.Text.RegularExpressions.Regex.Match(fileName, datePattern);
+                
+                if (match.Success && DateTime.TryParseExact(match.Groups[1].Value, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha))
+                {
+                    return fecha;
+                }
+                
+                // Si no se puede extraer la fecha del nombre, usar la fecha actual
+                return DateTime.Now;
+            }
+            catch
+            {
+                return DateTime.Now;
+            }
+        }
+
+        private void GuardarInformacionProcesamiento(DateTime fechaUltimoArchivo, string nombreUltimoArchivo, int archivosProceados, int colectivosActualizados)
+        {
+            try
+            {
+                // Buscar si ya existe un registro (solo mantenemos el último)
+                var registroExistente = _context.ProcesamientosKilometraje.FirstOrDefault();
+                
+                if (registroExistente != null)
+                {
+                    // Actualizar el registro existente
+                    registroExistente.FechaUltimoArchivo = fechaUltimoArchivo;
+                    registroExistente.NombreUltimoArchivo = Path.GetFileName(nombreUltimoArchivo);
+                    registroExistente.FechaProcesamiento = DateTime.Now;
+                    registroExistente.ArchivosProceados = archivosProceados;
+                    registroExistente.ColectivosActualizados = colectivosActualizados;
+                }
+                else
+                {
+                    // Crear nuevo registro
+                    var nuevoProcesamiento = new ApiSwagger.Models.ProcesamientoKilometraje
+                    {
+                        FechaUltimoArchivo = fechaUltimoArchivo,
+                        NombreUltimoArchivo = Path.GetFileName(nombreUltimoArchivo),
+                        FechaProcesamiento = DateTime.Now,
+                        ArchivosProceados = archivosProceados,
+                        ColectivosActualizados = colectivosActualizados
+                    };
+                    
+                    _context.ProcesamientosKilometraje.Add(nuevoProcesamiento);
+                }
+                
+                _context.SaveChanges();
+                Console.WriteLine($"Información de procesamiento guardada: Fecha último archivo: {fechaUltimoArchivo:yyyy-MM-dd}, Archivos procesados: {archivosProceados}, Colectivos actualizados: {colectivosActualizados}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al guardar información de procesamiento: {ex.Message}");
+            }
         }
     }
 }

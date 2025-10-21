@@ -15,6 +15,7 @@ namespace ApiSwagger.Data
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<CambioAceite> CambiosAceite { get; set; }
     public DbSet<HistorialVtv> HistorialesVtv { get; set; }
+    public DbSet<ProcesamientoKilometraje> ProcesamientosKilometraje { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
