@@ -10,6 +10,21 @@ using Amazon.S3;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Registrar servicios necesarios para el procesamiento de CSVs
+builder.Services.AddAWSService<IAmazonS3>();
+
+// Configurar Entity Framework Core con MySQL
+var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no está configurada.");
+
+builder.Services.AddDbContext<ApiSwagger.Data.AppDbContext>(options =>
+    options.UseMySql(
+        mysqlConnectionString,
+        new MySqlServerVersion(new Version(8, 0, 0)),
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure()
+    )
+);
+
 // Permitir ejecución especial para procesamiento de CSVs
 if (args.Length > 0 && args[0] == "--process-csvs")
 {
@@ -28,7 +43,6 @@ if (args.Length > 0 && args[0] == "--process-csvs")
 }
 
 // Add services to the container.
-builder.Services.AddAWSService<IAmazonS3>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -60,8 +74,6 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddControllers();
 // Agregar servicios de health checks
-var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no está configurada.");
 builder.Services.AddHealthChecks()
     .AddMySql(
         mysqlConnectionString,
@@ -71,15 +83,6 @@ builder.Services.AddHealthChecks()
         new Uri("http://webui-ui-1"),
         name: "ui",
         failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy);
-
-// Configurar Entity Framework Core con MySQL
-builder.Services.AddDbContext<ApiSwagger.Data.AppDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 0)),
-        mySqlOptions => mySqlOptions.EnableRetryOnFailure()
-    )
-);
 
 // Configurar CORS para permitir cualquier origen temporalmente durante el desarrollo
 builder.Services.AddCors(options =>
