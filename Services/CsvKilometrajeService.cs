@@ -179,16 +179,27 @@ namespace ApiSwagger.Services
             try
             {
                 // Intentar extraer fecha del nombre del archivo
-                // Asumiendo formatos como: "2024-01-15_kilometrajes.csv" o "kilometrajes_2024-01-15.csv"
+                // Formatos soportados: 
+                // - "142_20251021_104201_Km_Gps.csv" (formato YYYYMMDD)
+                // - "2024-01-15_kilometrajes.csv" (formato YYYY-MM-DD)
                 var fileName = Path.GetFileNameWithoutExtension(nombreArchivo);
                 
-                // Buscar patrón de fecha YYYY-MM-DD
-                var datePattern = @"(\d{4}-\d{2}-\d{2})";
-                var match = System.Text.RegularExpressions.Regex.Match(fileName, datePattern);
+                // Primero buscar patrón de fecha YYYYMMDD (sin guiones)
+                var datePatternYYYYMMDD = @"(\d{8})";
+                var matchYYYYMMDD = System.Text.RegularExpressions.Regex.Match(fileName, datePatternYYYYMMDD);
                 
-                if (match.Success && DateTime.TryParseExact(match.Groups[1].Value, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateTime fecha))
+                if (matchYYYYMMDD.Success && DateTime.TryParseExact(matchYYYYMMDD.Groups[1].Value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fechaYYYYMMDD))
                 {
-                    return fecha;
+                    return fechaYYYYMMDD;
+                }
+                
+                // Si no funciona, buscar patrón de fecha YYYY-MM-DD (con guiones)
+                var datePatternYYYY_MM_DD = @"(\d{4}-\d{2}-\d{2})";
+                var matchYYYY_MM_DD = System.Text.RegularExpressions.Regex.Match(fileName, datePatternYYYY_MM_DD);
+                
+                if (matchYYYY_MM_DD.Success && DateTime.TryParseExact(matchYYYY_MM_DD.Groups[1].Value, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateTime fechaYYYY_MM_DD))
+                {
+                    return fechaYYYY_MM_DD;
                 }
                 
                 // Si no se puede extraer la fecha del nombre, usar la fecha actual

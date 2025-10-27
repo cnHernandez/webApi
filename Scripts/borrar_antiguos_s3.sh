@@ -37,18 +37,20 @@ aws_cmd() {
     fi
 }
 
-# Borrar archivos antiguos manteniendo solo los 10 más recientes
-echo "Iniciando limpieza de archivos antiguos en S3..." >> "$LOG_FILE"
+# Borrar TODOS los archivos de la carpeta procesados
+echo "Iniciando limpieza COMPLETA de archivos en S3 (carpeta procesados)..." >> "$LOG_FILE"
+echo "ADVERTENCIA: Se borrarán TODOS los archivos de la carpeta procesados" >> "$LOG_FILE"
+
+# Listar y borrar todos los archivos .csv en la carpeta procesados
 aws_cmd s3api list-objects-v2 --bucket "$BUCKET" --prefix "$PREFIX" --query "Contents[?ends_with(Key, '.csv')]" --output json 2>>"$LOG_FILE" | \
-jq -r '.[] | "\(.LastModified) \(.Key)"' | \
-sort | \
-head -n -10 | \
-awk '{print $2}' | \
+jq -r '.[].Key' | \
 while read key; do
     echo "Borrando $key" >> "$LOG_FILE"
     aws_cmd s3 rm "s3://$BUCKET/$key" >> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo "Error borrando $key a $(date)" >> "$LOG_FILE"
+    else
+        echo "Archivo $key borrado exitosamente" >> "$LOG_FILE"
     fi
 done
 
