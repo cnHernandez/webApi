@@ -13,6 +13,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Registrar servicios necesarios para el procesamiento de CSVs
 builder.Services.AddAWSService<IAmazonS3>();
 
+// Registrar CsvKilometrajeService para inyección en controllers
+builder.Services.AddScoped<ApiSwagger.Services.CsvKilometrajeService>(sp =>
+{
+    var db = sp.GetRequiredService<ApiSwagger.Data.AppDbContext>();
+    var s3 = sp.GetRequiredService<IAmazonS3>();
+    var config = sp.GetRequiredService<IConfiguration>();
+    var bucketName = config["S3Bucket"] ?? "kilometrajesube";
+    return new ApiSwagger.Services.CsvKilometrajeService(db, s3, bucketName);
+});
+
 // Configurar Entity Framework Core con MySQL
 var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no está configurada.");

@@ -26,11 +26,23 @@ namespace ApiSwagger.Services
         public void ProcesarArchivosCsv()
         {
             var archivos = ListarArchivosCsvAsync().GetAwaiter().GetResult();
-            Console.WriteLine($"Archivos encontrados: {archivos.Count}");
-            
+            Console.WriteLine($"Archivos encontrados en el bucket (sin filtrar): {archivos.Count}");
+
+            // Filtrar archivos cuya fecha ya fue procesada (evita doble procesamiento por archivos no movidos)
+            var ultimoProcesamiento = _context.ProcesamientosKilometraje.FirstOrDefault();
+            DateTime fechaCorte = ultimoProcesamiento?.FechaUltimoArchivo ?? DateTime.MinValue;
+            Console.WriteLine($"Fecha de corte (último archivo procesado): {fechaCorte:yyyy-MM-dd}");
+
+            archivos = archivos
+                .Where(a => ExtraerFechaDelNombreArchivo(a) > fechaCorte)
+                .OrderBy(a => ExtraerFechaDelNombreArchivo(a))
+                .ToList();
+
+            Console.WriteLine($"Archivos a procesar (posteriores al {fechaCorte:yyyy-MM-dd}): {archivos.Count}");
+
             if (archivos.Count == 0)
             {
-                Console.WriteLine("No se encontraron archivos para procesar.");
+                Console.WriteLine("No se encontraron archivos nuevos para procesar.");
                 return;
             }
             
@@ -172,6 +184,82 @@ namespace ApiSwagger.Services
             await _s3Client.CopyObjectAsync(_bucketName, key, _bucketName, destinoKey);
             // Borrar original
             await _s3Client.DeleteObjectAsync(_bucketName, key);
+        }
+
+        // ─────────────────────────────────────────────
+        // REVERSIÓN: deshace el procesamiento de archivos
+        // ya movidos a procesados/ que se sumaron por error
+        // ─────────────────────────────────────────────
+        public void RevertirArchivosCsv(List<string> nombresArchivos)
+        {
+            if (nombresArchivos == null || nombresArchivos.Count == 0)
+                throw new ArgumentException("Debe indicar al menos un archivo a revertir.");
+
+            int totalRevertidos = 0;
+            foreach (var nombre in nombresArchivos)
+            {
+                var key = _procesadosPrefix + nombre;
+                Console.WriteLine($"Revirtiendo archivo: {key}");
+                try
+                {
+                    using var stream = DescargarArchivoAsync(key).GetAwaiter().GetResult();
+                    int revertidos = RevertirArchivo(stream, nombre);
+                    totalRevertidos += revertidos;
+                    Console.WriteLine($"Archivo '{nombre}' revertido. Colectivos ajustados: {revertidos}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error al revertir '{nombre}': {ex.Message}");
+                    throw new Exception($"Error al revertir el archivo '{nombre}': {ex.Message}", ex);
+                }
+            }
+            Console.WriteLine($"Reversión completada. Total colectivos ajustados: {totalRevertidos}");
+        }
+
+        private int RevertirArchivo(Stream archivoStream, string nombreArchivo)
+        {
+            using var reader = new StreamReader(archivoStream, Encoding.UTF8, true, 1024, leaveOpen: false);
+            string? header = reader.ReadLine();
+            if (header == null)
+            {
+                Console.WriteLine($"[{nombreArchivo}] Archivo vacío o sin encabezado.");
+                return 0;
+            }
+            var columnas = header.Split(';');
+            int idxInterno = Array.FindIndex(columnas, c => c.Trim().ToUpper() == "INTERNO");
+            int idxKm = Array.FindIndex(columnas, c => c.Trim().ToUpper() == "KM RECORRIDOS");
+            if (idxInterno == -1 || idxKm == -1)
+            {
+                Console.WriteLine($"[{nombreArchivo}] Columnas INTERNO o KM RECORRIDOS no encontradas. Encabezado: {header}");
+                return 0;
+            }
+
+            int colectivosRevertidos = 0;
+            while (!reader.EndOfStream)
+            {
+                var linea = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(linea)) continue;
+                var datos = linea.Split(';');
+                if (datos.Length <= Math.Max(idxInterno, idxKm)) continue;
+                var interno = datos[idxInterno].Trim();
+                var kmStr = datos[idxKm].Trim().Replace(",", ".");
+                if (!decimal.TryParse(kmStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal kmRecorridos))
+                    continue;
+                var colectivo = _context.Colectivos.FirstOrDefault(c => c.NroColectivo.Trim() == interno);
+                if (colectivo != null)
+                {
+                    decimal kmAntes = colectivo.Kilometraje ?? 0m;
+                    colectivo.Kilometraje = Math.Max(0, kmAntes - kmRecorridos);
+                    colectivosRevertidos++;
+                    Console.WriteLine($"[Revertido] {interno}: {kmAntes:F2} - {kmRecorridos:F2} = {colectivo.Kilometraje:F2}");
+                }
+                else
+                {
+                    Console.WriteLine($"[{nombreArchivo}] Colectivo INTERNO={interno} no encontrado.");
+                }
+            }
+            _context.SaveChanges();
+            return colectivosRevertidos;
         }
 
         private DateTime ExtraerFechaDelNombreArchivo(string nombreArchivo)

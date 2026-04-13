@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ApiSwagger.Data;
 using ApiSwagger.Dtos;
+using ApiSwagger.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiSwagger.Controllers
@@ -10,10 +11,12 @@ namespace ApiSwagger.Controllers
     public class SistemaController : ControllerBase
     {
         private readonly AppDbContext _context;
-        
-        public SistemaController(AppDbContext context)
+        private readonly CsvKilometrajeService _csvService;
+
+        public SistemaController(AppDbContext context, CsvKilometrajeService csvService)
         {
             _context = context;
+            _csvService = csvService;
         }
 
         // GET /api/sistema/ultimo-procesamiento
@@ -80,6 +83,29 @@ namespace ApiSwagger.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { mensaje = "Error al obtener estado del sistema", error = ex.Message });
+            }
+        }
+
+        // POST /api/sistema/revertir-procesamiento
+        // Revierte los km sumados por error desde archivos en procesados/ de S3
+        [HttpPost("revertir-procesamiento")]
+        public IActionResult RevertirProcesamiento([FromBody] RevertirProcesamientoDto dto)
+        {
+            if (dto?.Archivos == null || dto.Archivos.Count == 0)
+                return BadRequest(new { mensaje = "Debe indicar al menos un nombre de archivo a revertir (buscados en procesados/ de S3)." });
+
+            try
+            {
+                _csvService.RevertirArchivosCsv(dto.Archivos);
+                return Ok(new
+                {
+                    mensaje = $"{dto.Archivos.Count} archivo(s) revertido(s) correctamente. Los km de esos archivos fueron restados de cada colectivo.",
+                    archivosRevertidos = dto.Archivos
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error al revertir el procesamiento.", error = ex.Message });
             }
         }
     }
