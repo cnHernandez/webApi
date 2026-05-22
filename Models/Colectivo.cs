@@ -5,7 +5,8 @@ namespace ApiSwagger.Models
     public enum EstadoColectivo
     {
         Activo,
-        FueraDeServicio
+        FueraDeServicio,
+        DarDeBaja
     }
 
     public class Colectivo

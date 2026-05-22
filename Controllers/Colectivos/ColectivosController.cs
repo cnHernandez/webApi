@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using ApiSwagger.Data;
+using ApiSwagger.Dtos;
 using ApiSwagger.Models;
+using ApiSwagger.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiSwagger.Controllers.Colectivos
@@ -10,27 +12,33 @@ namespace ApiSwagger.Controllers.Colectivos
     public class ColectivosController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public ColectivosController(AppDbContext context)
+        private readonly ColectivoService _colectivoService;
+
+        public ColectivosController(AppDbContext context, ColectivoService colectivoService)
         {
             _context = context;
+            _colectivoService = colectivoService;
         }
 
         // PUT /colectivos/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> ModificarColectivo(int id, [FromBody] Colectivo datos)
+        public async Task<IActionResult> ModificarColectivo(int id, [FromBody] GuardarColectivoDto datos)
         {
-            var colectivo = await _context.Colectivos.FindAsync(id);
-            if (colectivo == null) return NotFound();
-
-            colectivo.NroColectivo = datos.NroColectivo;
-            colectivo.Patente = datos.Patente;
-            colectivo.Modelo = datos.Modelo;
-            colectivo.Estado = datos.Estado;
-            colectivo.VtoVTV = datos.VtoVTV;
-            colectivo.Kilometraje = datos.Kilometraje;
-
-            await _context.SaveChangesAsync();
-            return Ok(colectivo);
+            try
+            {
+                var colectivo = await _colectivoService.ActualizarAsync(id, datos);
+                var montajesActivos = await ObtenerMontajesActivosAsync(new[] { colectivo.IdColectivo });
+                var numerosAsignados = await ObtenerNumerosAsignadosActualesAsync();
+                return Ok(MapColectivo(colectivo, montajesActivos, numerosAsignados));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
 
@@ -38,65 +46,60 @@ namespace ApiSwagger.Controllers.Colectivos
         [HttpGet]
         public async Task<IActionResult> GetColectivos()
         {
-            // Traer todos los colectivos y sus cambios de aceite en una sola consulta
-            var colectivos = await _context.Colectivos
-                .Include(c => c.CambiosAceite)
-                .ToListAsync();
-
-            var resultado = colectivos.Select(colectivo =>
-            {
-                var ultimoCambio = colectivo.CambiosAceite?
-                    .OrderByDescending(ca => ca.Fecha)
-                    .FirstOrDefault();
-
-                return new
-                {
-                    idColectivo = colectivo.IdColectivo,
-                    nroColectivo = colectivo.NroColectivo,
-                    patente = colectivo.Patente,
-                    modelo = colectivo.Modelo,
-                    estado = (int)colectivo.Estado,
-                    kilometraje = colectivo.Kilometraje,
-                    vtoVTV = colectivo.VtoVTV?.ToString("yyyy-MM-dd"),
-                    ultimoCambioAceite = ultimoCambio == null ? null : new
-                    {
-                        kilometros = ultimoCambio.Kilometros,
-                        fecha = ultimoCambio.Fecha.ToString("yyyy-MM-dd")
-                    }
-                };
-            }).ToList();
-
-            return Ok(resultado);
+            var colectivos = await _colectivoService.ListarAsync();
+            var montajesActivos = await ObtenerMontajesActivosAsync(colectivos.Select(c => c.IdColectivo));
+            var numerosAsignados = await ObtenerNumerosAsignadosActualesAsync();
+            return Ok(colectivos.Select(c => MapColectivo(c, montajesActivos, numerosAsignados)));
         }
 
         // GET /colectivos/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetColectivo(int id)
         {
-            var colectivo = await _context.Colectivos.FindAsync(id);
+            var colectivo = await _colectivoService.ObtenerPorIdAsync(id);
             if (colectivo == null) return NotFound();
-            return Ok(colectivo);
+            var montajesActivos = await ObtenerMontajesActivosAsync(new[] { colectivo.IdColectivo });
+            var numerosAsignados = await ObtenerNumerosAsignadosActualesAsync();
+            return Ok(MapColectivo(colectivo, montajesActivos, numerosAsignados));
         }
 
 
         // POST /colectivos
         [HttpPost]
-        public async Task<IActionResult> CrearColectivo([FromBody] Colectivo colectivo)
+        public async Task<IActionResult> CrearColectivo([FromBody] GuardarColectivoDto colectivo)
         {
-            _context.Colectivos.Add(colectivo);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetColectivo), new { id = colectivo.IdColectivo }, colectivo);
+            try
+            {
+                var creado = await _colectivoService.CrearAsync(colectivo);
+                var montajesActivos = await ObtenerMontajesActivosAsync(new[] { creado.IdColectivo });
+                var numerosAsignados = await ObtenerNumerosAsignadosActualesAsync();
+                return CreatedAtAction(nameof(GetColectivo), new { id = creado.IdColectivo }, MapColectivo(creado, montajesActivos, numerosAsignados));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         // PATCH /colectivos/{id}
         [HttpPatch("{id}")]
-        public async Task<IActionResult> ActualizarEstado(int id, [FromBody] Colectivo datos)
+        public async Task<IActionResult> ActualizarEstado(int id, [FromBody] GuardarColectivoDto datos)
         {
-            var colectivo = await _context.Colectivos.FindAsync(id);
-            if (colectivo == null) return NotFound();
-            colectivo.Estado = datos.Estado;
-            await _context.SaveChangesAsync();
-            return Ok(colectivo);
+            try
+            {
+                var colectivo = await _colectivoService.ActualizarAsync(id, datos);
+                var montajesActivos = await ObtenerMontajesActivosAsync(new[] { colectivo.IdColectivo });
+                var numerosAsignados = await ObtenerNumerosAsignadosActualesAsync();
+                return Ok(MapColectivo(colectivo, montajesActivos, numerosAsignados));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         // GET /colectivos/{nroColectivo}/historial-vtv
@@ -186,53 +189,111 @@ namespace ApiSwagger.Controllers.Colectivos
         [HttpDelete("{id}")]
         public async Task<IActionResult> EliminarColectivo(int id)
         {
-            var colectivo = await _context.Colectivos.FindAsync(id);
-            if (colectivo == null) return NotFound();
-
-            // Dar de baja todos los montajes activos de este colectivo
-            var montajes = await _context.MontajesCubierta
-                .Where(m => m.IdColectivo == id && m.FechaDesinstalacion == null)
-                .ToListAsync();
-            foreach (var montaje in montajes)
+            try
             {
-                montaje.FechaDesinstalacion = DateTime.Now;
-                montaje.MotivoCambio = "BAJA COLECTIVO";
-                // Liberar la cubierta asociada
-                var cubierta = await _context.Cubiertas.FindAsync(montaje.IdCubierta);
-                if (cubierta != null)
-                {
-                    cubierta.IdColectivo = null;
-                    cubierta.Ubicacion = null;
-                    try
-                    {
-                        var prop = _context.Entry(cubierta).Property("IdUbicacion");
-                        if (prop != null) prop.CurrentValue = null;
-                    }
-                    catch { /* ignorar si no existe */ }
-                    var propDesc = cubierta.GetType().GetProperty("UbicacionDescripcion");
-                    if (propDesc != null && propDesc.CanWrite)
-                        propDesc.SetValue(cubierta, string.Empty);
-                    // Limpiar también UbicacionIdUbicacion si existe
-                    var entry = _context.Entry(cubierta);
-                    if (entry.Property("UbicacionIdUbicacion") != null)
-                        entry.Property("UbicacionIdUbicacion").CurrentValue = null;
-                }
+                await _colectivoService.DarDeBajaAsync(id);
+                return NoContent();
             }
-
-            // Baja lógica: cambiar estado
-            colectivo.Estado = EstadoColectivo.FueraDeServicio;
-            await _context.SaveChangesAsync();
-            return NoContent();
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         // GET /colectivos/por-nro/{nroColectivo}
         [HttpGet("por-nro/{nroColectivo}")]
         public async Task<IActionResult> GetColectivoPorNro(string nroColectivo)
         {
-            var colectivo = await _context.Colectivos.FirstOrDefaultAsync(c => c.NroColectivo == nroColectivo);
+            var colectivo = await _colectivoService.ObtenerPorNumeroAsync(nroColectivo);
             if (colectivo == null)
                 return NotFound();
-            return Ok(colectivo);
+            var montajesActivos = await ObtenerMontajesActivosAsync(new[] { colectivo.IdColectivo });
+            var numerosAsignados = await ObtenerNumerosAsignadosActualesAsync();
+            return Ok(MapColectivo(colectivo, montajesActivos, numerosAsignados));
+        }
+
+        private async Task<HashSet<string>> ObtenerNumerosAsignadosActualesAsync()
+        {
+            var numeros = await _context.Colectivos
+                .AsNoTracking()
+                .Select(c => c.NroColectivo)
+                .ToListAsync();
+
+            return numeros
+                .Where(n => !string.IsNullOrWhiteSpace(n) && ColectivoService.ObtenerNumeroLiberado(n) == null)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private async Task<Dictionary<int, List<object>>> ObtenerMontajesActivosAsync(IEnumerable<int> idsColectivo)
+        {
+            var ids = idsColectivo.Distinct().ToList();
+            if (ids.Count == 0)
+            {
+                return new Dictionary<int, List<object>>();
+            }
+
+            var montajes = await _context.MontajesCubierta
+                .AsNoTracking()
+                .Include(m => m.Cubierta)
+                .Include(m => m.UbicacionCubierta)
+                .Where(m => m.IdColectivo.HasValue && ids.Contains(m.IdColectivo.Value) && m.FechaDesinstalacion == null)
+                .OrderBy(m => m.IdUbicacion)
+                .Select(m => new
+                {
+                    IdColectivo = m.IdColectivo!.Value,
+                    IdUbicacion = m.IdUbicacion ?? 0,
+                    DescripcionUbicacion = m.UbicacionCubierta != null ? m.UbicacionCubierta.Descripcion : string.Empty,
+                    NroSerie = m.Cubierta != null ? m.Cubierta.NroSerie : string.Empty,
+                    EstadoCubierta = m.Cubierta != null ? m.Cubierta.Estado.ToString() : string.Empty
+                })
+                .ToListAsync();
+
+            return montajes
+                .GroupBy(m => m.IdColectivo)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(m => (object)new
+                    {
+                        idUbicacion = m.IdUbicacion,
+                        descripcionUbicacion = m.DescripcionUbicacion,
+                        nroSerie = m.NroSerie,
+                        estadoCubierta = m.EstadoCubierta
+                    }).ToList());
+        }
+
+        private static object MapColectivo(Colectivo colectivo, IReadOnlyDictionary<int, List<object>> montajesActivos, ISet<string> numerosAsignados)
+        {
+            var sinAsignacion = ColectivoService.EsSinAsignacion(colectivo);
+            var tieneNumeroVacante = ColectivoService.TieneNumeroVacante(colectivo);
+            var numeroLiberado = ColectivoService.ObtenerNumeroLiberado(colectivo.NroColectivo);
+            var numeroDisponibleActual = !string.IsNullOrWhiteSpace(numeroLiberado) && !numerosAsignados.Contains(numeroLiberado)
+                ? numeroLiberado
+                : null;
+            var ultimoCambio = colectivo.CambiosAceite?
+                .OrderByDescending(ca => ca.Fecha)
+                .FirstOrDefault();
+            montajesActivos.TryGetValue(colectivo.IdColectivo, out var cubiertasMontadas);
+
+            return new
+            {
+                idColectivo = colectivo.IdColectivo,
+                nroColectivo = tieneNumeroVacante ? string.Empty : colectivo.NroColectivo,
+                numeroLiberado,
+                numeroDisponibleActual,
+                patente = colectivo.Patente,
+                modelo = colectivo.Modelo,
+                estado = (int)colectivo.Estado,
+                estadoDescripcion = colectivo.Estado.ToString(),
+                sinAsignacion,
+                kilometraje = colectivo.Kilometraje,
+                vtoVTV = colectivo.VtoVTV?.ToString("yyyy-MM-dd"),
+                cubiertasMontadas = cubiertasMontadas ?? new List<object>(),
+                ultimoCambioAceite = ultimoCambio == null ? null : new
+                {
+                    kilometros = ultimoCambio.Kilometros,
+                    fecha = ultimoCambio.Fecha.ToString("yyyy-MM-dd")
+                }
+            };
         }
     }
 }

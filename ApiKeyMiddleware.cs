@@ -16,7 +16,7 @@ namespace ApiSwagger
         {
             _next = next;
             _logger = logger;
-            _apiKey = configuration["ApiSettings:ApiKey"];
+            _apiKey = configuration["ApiSettings:ApiKey"] ?? configuration["API_KEY"];
         }
 
         public async Task InvokeAsync(HttpContext context)

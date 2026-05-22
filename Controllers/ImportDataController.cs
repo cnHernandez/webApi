@@ -1,14 +1,8 @@
 using ApiSwagger.Data;
-using ApiSwagger.Models;
 using ApiSwagger.Services;
-using ClosedXML.Excel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace ApiSwagger.Controllers
 {
@@ -16,13 +10,11 @@ namespace ApiSwagger.Controllers
     [ApiController]
     public class ImportDataController : ControllerBase
     {
-        private readonly AppDbContext _context;
         private readonly ILogger<ImportDataController> _logger;
         private readonly ExcelService _excelService;
 
         public ImportDataController(AppDbContext context, ILogger<ImportDataController> logger)
         {
-            _context = context;
             _logger = logger;
             _excelService = new ExcelService(context);
         }
@@ -57,14 +49,6 @@ namespace ApiSwagger.Controllers
                 _logger.LogError(ex, "Error al cargar datos masivamente para el modelo {Modelo}", modelo);
                 return StatusCode(500, "Ocurrió un error durante la importación de datos.");
             }
-        }
-    }
-
-    public static class DateTimeExtensions
-    {
-        public static DateOnly ToDateOnly(this DateTime dateTime)
-        {
-            return DateOnly.FromDateTime(dateTime);
         }
     }
 }

@@ -23,6 +23,8 @@ builder.Services.AddScoped<ApiSwagger.Services.CsvKilometrajeService>(sp =>
     return new ApiSwagger.Services.CsvKilometrajeService(db, s3, bucketName);
 });
 
+builder.Services.AddScoped<ApiSwagger.Services.ColectivoService>();
+
 // Configurar Entity Framework Core con MySQL
 var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no está configurada.");
@@ -112,16 +114,16 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseRouting();
+// Aplicar CORS antes de middlewares que puedan finalizar la respuesta.
+app.UseCors("AllowAll");
+
 // Middleware de API Key global
 app.UseMiddleware<ApiSwagger.ApiKeyMiddleware>(builder.Configuration);
 // Middleware de manejo de excepciones
 app.UseMiddleware<ApiSwagger.Middleware.ExceptionMiddleware>();
 // Middleware de autenticación por roles (requiere que el usuario esté autenticado)
 app.UseMiddleware<ApiSwagger.Middleware.AuthenticationMiddleware>();
-
-app.UseRouting();
-// Usar la política de CORS para permitir cualquier origen
-app.UseCors("AllowAll");
 
 app.MapControllers();
 
