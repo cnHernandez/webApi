@@ -13,7 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Registrar servicios necesarios para el procesamiento de CSVs
 builder.Services.AddAWSService<IAmazonS3>();
 
-// Registrar CsvKilometrajeService para inyección en controllers
+// Registrar servicios para inyección en controllers
+builder.Services.AddScoped<ApiSwagger.Services.ColectivoService>();
+
 builder.Services.AddScoped<ApiSwagger.Services.CsvKilometrajeService>(sp =>
 {
     var db = sp.GetRequiredService<ApiSwagger.Data.AppDbContext>();
