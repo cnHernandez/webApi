@@ -44,11 +44,8 @@ namespace ApiSwagger
 
             // Registrar todos los encabezados recibidos para depuración
             _logger.LogInformation("Encabezados recibidos: {Headers}", context.Request.Headers);
-
-            var apiKeysPermitidas = new[] { _apiKey, "QnVydmVsYUFwaVNlY3VyaXR5IzEyMg==", "QnVydmVsYUFwaVNlY3VyaXR5IzEyMg=" };
-            var esValida = apiKeysPermitidas.Any(k => !string.IsNullOrEmpty(k) && string.Equals(k, extractedApiKey.ToString(), StringComparison.Ordinal));
-
-            if (!esValida)
+                  if (string.IsNullOrEmpty(_apiKey) || extractedApiKey != _apiKey)
+            
             {
                 _logger.LogWarning("Clave API inválida. Esperada: {ApiKey}, Recibida: {ExtractedApiKey}", _apiKey, extractedApiKey);
                 context.Response.StatusCode = 401;
