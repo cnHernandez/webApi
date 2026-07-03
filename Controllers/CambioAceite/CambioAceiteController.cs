@@ -31,6 +31,8 @@ namespace ApiSwagger.Controllers.CambioAceite
                 Kilometros = dto.Kilometros, // Ahora acepta decimales
                 FiltrosCambiados = dto.FiltrosCambiados
             };
+
+            colectivo.Kilometraje = 0m;
             _context.CambiosAceite.Add(cambio);
             await _context.SaveChangesAsync();
             dto.Id = cambio.Id;

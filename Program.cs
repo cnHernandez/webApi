@@ -23,8 +23,6 @@ builder.Services.AddScoped<ApiSwagger.Services.CsvKilometrajeService>(sp =>
     return new ApiSwagger.Services.CsvKilometrajeService(db, s3, bucketName);
 });
 
-builder.Services.AddScoped<ApiSwagger.Services.ColectivoService>();
-
 // Configurar Entity Framework Core con MySQL
 var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no está configurada.");
